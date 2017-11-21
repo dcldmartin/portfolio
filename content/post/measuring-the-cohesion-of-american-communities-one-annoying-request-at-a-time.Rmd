@@ -36,7 +36,7 @@ This specific behavior -- turning in a census form early -- actually tells us a 
 
 <div align="center">
 
-![](/post/census_response/Cook County_Census Response Rates.png)
+![](/post/measuring-the-cohesion-of-american-communities-one-annoying-request-at-a-time/Cook County_Census Response Rates.png)
     <div align='left'><i>Census response rates in Chicago</i>
     </div>
 </div>
