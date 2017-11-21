@@ -1,8 +1,8 @@
 baseurl = "http://dcmart.in/"
-title = ""
+title = "DCM"
 theme = "ghostwriter"
 languageCode = "en-us"
-copyright = "2017"
+copyright = ""
 googleAnalytics = "XXX"
 
 [Author]
