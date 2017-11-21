@@ -1,0 +1,188 @@
+---
+title: 'Scraping from PDFs: Election dates from the FEC'
+author: DCM
+date: []
+slug: scraping-from-pdfs-election-dates-from-the-fec
+categories: []
+tags:
+  - How-to
+---
+
+I've been doing research that shows change in opinion over time across the electoral cycle and I wanted to visualize primary elections - but there's a whole lot of them. Rather than copying them down by hand, I decided to scrape them from a PDF. I've included the full code to reproduce what I did below.
+
+Now, you might notice that the document in question is pretty short and you could probably copy and paste this thing. My main interest here was to use this as a toy example to show how scraping structured data from a document like this could be done. Hopefully it's useful as a reference, even if it's a little overkill for this specific instance. This code scales pretty well to a document of any size.
+
+_Note: see the [Tools](#tools) section below for links to more info on what's going on here_
+
+In R, a good tool for this is [```tabulizer```](https://github.com/ropensci/tabulizer), a wrapper for a library of Java tools (Tabula).
+
+First, keep in mind: this package is just a way for you to use R to talk to Java. I don't do Java myself and ran into a few wonky errors. See below for a little more detail in case you run into them[^*] 
+
+I installed from the github repo using devtools (you'll need to install devtools first, if you haven't already):
+
+```devtools::install_github(c("ropenscilabs/tabulizerjars", "ropenscilabs/tabulizer"), args = "--no-multiarch")```
+
+```{r, results="hide", include = FALSE}
+dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/jre/lib/server/libjvm.dylib')
+```
+
+
+```{r, results="hide", warning=FALSE}
+
+# Load in packages
+
+library(tidyverse)
+library(stringr)
+library(tabulizer)
+library(purrr)
+```
+
+The FEC has election dates posted as PDFs. You could probably scrape these from Wikipedia or something similar, but I like to go straight to the source.
+
+```{r}
+prim_loc <- 'https://transition.fec.gov/pubrec/2008pdates.pdf'
+
+prim <- extract_tables(prim_loc)
+```
+
+It might take a minute. Now you've got all the data stored in a useful R object - a list where each top-level element is a page of the PDF.
+
+```{r}
+str(prim)
+```
+
+Let's look at the first page. If you look into the first element, it's stored as a two dimensional character vector - rows and columns extracted from that page.
+
+```{r}
+str(prim[[1]])
+```
+
+```{r}
+prim[[1]][c(1:20), ]
+```
+
+Let's just slice off the stuff we need. First drop the pages we don't need (the pages are redundant, the actual primary data shown in alpha order are on pages 1 and 2). Second, we don't care about the filing deadlines, so lets just keep the first three columns (with states and dates). Third, let's drop those headers (the first four rows) and keep everything else.
+
+I make them into actual data.frames (well, [tibbles](http://tibble.tidyverse.org/)) so we can use other dplyr verbs on them. Then to combine all list elements into one big table and give them useful variable names.
+
+```{r}
+prim_df<- 
+prim %>%
+.[1:2] %>%
+map(., `[`, c(-1:-4), c(1:3) ) %>%
+map(as.tibble) %>%
+bind_rows() %>%
+set_names(c("state", "primary", "caucus") ) %>%
+
+na_if("") %>%
+filter(!(is.na(state) & is.na(primary) & is.na(caucus)))
+
+head(prim_df)
+tail(prim_df)
+```
+
+Note two things:
+1) First, I used backticks around the subset operator to apply it as a function `[` .
+2) ```map``` comes from ```purrr```. Rather than using the apply() set of functions in base R, (or the ply family frm the earlier plyr package) as with other languages, map lets me apply a function across elements of a vector and returns that vector object. So in this case, I get back a list with the top four rows removed, retaining the first three columns.
+
+Now some general cleanup: For empty strings, make them NA and get rid of rows where everything's empty. Now fill in states where there's an implied value that isn't included in the PDF.
+
+```{r}
+prim_df<- 
+prim_df %>%
+fill(state)
+
+head(prim_df)
+tail(prim_df)
+```
+
+A couple spot revisions...
+
+```{r}
+prim_df$caucus[prim_df$caucus == '1/25-2/7'] <- '1/25-2/7 (Republicans)'
+prim_df$caucus[prim_df$caucus == '(Republicans)'] <- NA
+```
+
+Now, rather than a wide format with a column for each type of election, let's make just one row per election and get rid of those where there's no date value.
+
+```{r}
+primary_dates_2008 <-
+prim_df %>%  
+gather('primary', 'caucus', key = 'elex_type', value = 'date') %>%
+filter(!(is.na(date)))
+
+head(primary_dates_2008)
+tail(primary_dates_2008)
+```
+
+Finally, separate the date and the party labels into separate columns and format the dates with some regular expressions.
+
+```{r}
+library(lubridate)
+
+primary_dates_2008 <-
+primary_dates_2008 %>%
+mutate(
+    elex_party = str_extract(date, regex("[a-zA-Z]+")),
+    date = str_extract(date, regex("\\d+/\\d+")) %>%
+        paste0("/2008") %>%
+        mdy()
+    )
+
+
+head(primary_dates_2008)
+tail(primary_dates_2008)
+```
+
+Here's a quick-and-dirty plot just to check to see this all makes sense:
+
+```{r}
+ggplot() +
+  geom_text(data= primary_dates_2008, aes(x = date, y=0, label = state, color=coalesce(elex_party, 'Both'), angle=90), 
+             size=3, position=position_jitter(width=2,height=8), alpha=0.6) +
+   scale_color_manual(values = c("black", "blue","red"), drop=F) +
+   theme_minimal() +
+   guides(color=guide_legend(title="Election Type")) +
+   theme(panel.background = element_rect(fill = "white", colour = "white")) +
+   labs(x = "", y = "", title = "Primary dates across 2008 election cycle") +
+   scale_x_date(date_labels = "%b %Y")
+```
+
+Yeah, this looks about right: Iowa and New Hampshire at the front; a giant jumble around Super Tuesday and lots of dead space in the middle of spring.
+
+---
+
+<a id='tools'></a>
+
+### Tools:
+
+_A few links to tutorials on the functions I use above_
+
+[tabulizer](https://github.com/ropensci/tabulizer)
+
+purr: [map](http://r4ds.had.co.nz/iteration.html#mapping-over-multiple-arguments) 
+
+dplyr: [filter, mutate](http://r4ds.had.co.nz/transform.html), [gather](http://r4ds.had.co.nz/tidy-data.html#spreading-and-gathering),  bind_rows, na_if, [fill](http://r4ds.had.co.nz/tidy-data.html#missing-values-3)
+
+maggritr: [%>%](http://r4ds.had.co.nz/pipes.html), set_names
+
+[stringr](http://r4ds.had.co.nz/strings.html): str_replace, str_extract, etc
+
+[lubridate](http://r4ds.had.co.nz/dates-and-times.html)
+
+[ggplot](http://r4ds.had.co.nz/data-visualisation.html#introduction-1)
+
+---
+
+### Some coding concepts:
+
+Regular expressions: [Introduction](http://r4ds.had.co.nz/strings.html#matching-patterns-with-regular-expressions) and [cheatsheet](http://www.rexegg.com/regex-quickstart.html)
+
+``` `[` ```: [Advanced R > Functions](http://adv-r.had.co.nz/Functions.html). See 'Infix functions'
+
+[^*]: Apparently a lot of folks have trouble using R packages that have a Java dependency - or getting them to work with RStudio, if that's how you do your work. This is too bad, because there's a lot of utility you can get out of them.  
+  A brief summary of some of what I've found in dealing with this:
+  You need to have the [Java runtime environment](https://java.com/en/download/) installed first before doing any of this.
+  Simple enough. But sometimes the R packages and the environments where they run have trouble finding the right libraries to get R and Java to talk to each other. In the case of using RStudio, I found a solution that involved 1) installing rJava first, 2) from terminal, entering ```R CMD javarecog``` to find out where the libraries in question were being stored and 3) calling them directly in R before loading the tabulizer package. In my case that's:
+  ```dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/jre/lib/server/libjvm.dylib')```
+  If you're running on a Mac, odds are you'll just need to replace the ```jdk1.8.0_144.jdk``` part with whatever JDK version you've installed - and javarecog should tell you what you need to know.

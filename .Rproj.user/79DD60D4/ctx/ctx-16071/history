@@ -1,0 +1,7 @@
+blogdown::new_site()
+blogdown::new_site()
+source('~/Documents/Data Projects/blog_posts/dummy_blogdown_project.R')
+source('~/.active-rstudio-document', echo=TRUE)
+install.packages("blogdown")
+knitr::opts_chunk$set(echo = TRUE)
+blogdown::new_site(theme = 'jbub/ghostwriter')

@@ -1,0 +1,275 @@
+---
+title: Using Google Searches to Measure Attention to Elections
+author: ''
+date: []
+slug: using-google-searches-to-measure-attention-to-elections
+categories: []
+tags: []
+---
+
+
+```{r include=FALSE}
+library(gtrendsR)
+
+# Functions to pull multiple samples of a query, build a list of all data,
+# extract interest over time, yield a tibble of useful data and save both to file
+
+####################################################################################
+
+stamp_string <- function(...){
+    now(tzone = "America/Chicago") %>%
+    str_replace_all(., "[\\-\\:]", "") %>%
+    str_replace_all(., "[\\s]", "_")
+}
+
+# Multiple pulls of the same query: yields timestamped list
+gtrends_loop_pull <- function(q, n=20, time, geo=c("US"), s=2){
+    
+    require(tidyverse)
+    require(lubridate)
+    require(stringr)
+    library(gtrendsR)
+    
+    # Make timestamp string
+    stamp <- stamp_string()
+    
+    #Instantiate list; message: list name
+    list_name <- paste0("gtrends_pull_", stamp)
+    gtrends_list <- list()
+    message("List name:", list_name)
+    
+    for (i in 1:n){
+        # Pull gtrends
+        pull <- gtrends(q, geo = geo, time = time)
+        
+        # Add timestamp for the pull object
+        pull[['stamp']] <- now(tzone = "America/Chicago")
+        
+        # Number the pull object
+        pull_serial <- paste0("pull", i)   
+        gtrends_list[[pull_serial]] <- pull
+        
+        # Message: pulling
+        message(paste0("Pulling ", i, " (", pull[['stamp']], ")")) 
+        
+        Sys.sleep(s) # So as not to get rate limited / banned
+        }
+        
+    assign(list_name, gtrends_list)
+        
+    get(list_name) # ?
+}
+
+# Yields merged table (as tibble) of interest over time
+gtrends_data_merge <- function(gtrends_list){
+    # Extract the data, name each col for the pull #, join together
+    gtrends_list %>%
+    transpose() %>%
+    .[['interest_over_time']] %>%
+    lmap(~{
+        el_name <- names(.)
+
+        names(.[[1]])[2] <- el_name
+
+        tibble(.)
+    }) %>%
+    map(~.[[1]]) %>%
+    map(~.[1:3]) %>%
+    reduce(full_join)
+}
+```
+
+```{r include=FALSE}
+# Load in google trends data after saving it earlier
+
+library(lubridate)
+library(stringr)
+library(tidyverse)
+
+gtrends_path <- "/Users/davidmartin/Documents/Dissertation/7_Data/Study_3/Google Trends/Data"
+
+gtrends_04_dem <- readRDS(paste0(gtrends_path, paste0("gtrends_data_2004_dem", "_df.RDS")))
+
+gtrends_04_rep <- readRDS(paste0(gtrends_path, paste0("gtrends_data_2004_repub", "_df.RDS")))
+
+gtrends_08_dem <- readRDS(paste0(gtrends_path, paste0("gtrends_data_2008_dem", "_df.RDS")))
+
+gtrends_08_rep <- readRDS(paste0(gtrends_path, paste0("gtrends_data_2008_repub", "_df.RDS")))
+
+gtrends_party_salience <-
+list(gtrends_04_dem,
+     gtrends_04_rep,
+     gtrends_08_dem,
+     gtrends_08_rep) %>%
+map(select, date, pull1, keyword) %>%
+map(~set_names(., c("date", 
+            paste0(str_sub(.$keyword[1], 1, 3), "_salience"), "keyword"))) %>%
+map(~as.tibble(.[,1:2])) %>%
+reduce(full_join, by="date") %>%
+transmute(date = date,
+         dem_salience = coalesce(dem_salience.x, dem_salience.y),
+         rep_salience = coalesce(rep_salience.x, rep_salience.y))
+
+saveRDS(gtrends_party_salience, file=paste0(gtrends_path, "gtrends_party_salience.RDS"))
+
+gtrends_party_salience_04 <-
+gtrends_party_salience %>%
+filter(ymd(date) < ymd('2006-01-01'))
+
+gtrends_party_salience_08 <-
+gtrends_party_salience %>%
+filter(ymd(date) > ymd('2006-01-01'))
+```
+
+
+```{r include=FALSE}
+library(lubridate )
+
+data_path <-'/Users/davidmartin/Documents/Dissertation/7_Data/Study_3/'
+
+prim_08_clean <- readRDS(paste0(data_path, "primary_dates_2008_clean.RDS"))
+
+prim_04_clean <- readRDS(paste0(data_path, "primary_dates_2004_clean.RDS"))
+
+library(ggthemes)
+library(hrbrthemes)
+library(ggalt)
+```
+
+```{r include=FALSE}
+# 2008
+
+# Visualize gtrends by party over time for each year
+
+rects = tibble(start = ymd('2008-08-08'), 
+                end = ymd('2008-08-24'), 
+                y1 = -Inf,
+                y2 = Inf)
+
+texts = tibble(x = c(ymd('2008-07-04'), ymd('2008-08-24'), 
+                     ymd('2008-11-04'), ymd('2008-05-01'),
+                    ymd('2008-09-01'), ymd('2008-01-03'), 
+                     ymd('2008-01-08'), ymd('2008-02-05')),
+                lab = c("July 4th", "Olympics", 
+                        "General election", "Primaries",
+                       "Conventions", "IA", "NH",
+                       "Super Tuesday"),
+                hjust = c(1, 1, 1, 1, 1,2,3,1),
+               vjust = c(0,-1,1, 1, 1, 0.5, 0.5, 0.5),
+               angle = c(90,90,90,0, 90, 90, 90, 90)
+              )
+
+vlines = tibble(xint = c(ymd('2008-07-04'), ymd('2008-11-04'), ymd('2008-09-01'))
+                )
+chart08 <-
+ggplot() +
+#   geom_rect(data = gtrends_08_periods, 
+#                  aes(xmin=ymd(grp_3wka_date_min), 
+#                      xmax=ymd(grp_3wka_date_min)+20, 
+#                      ymin=0, ymax=100, fill=as.character(grp_3wka)), alpha=0.1) +
+
+  geom_line(data = gtrends_party_salience_08, aes(x = ymd(date), y = dem_salience), color=4) +
+#   geom_smooth(data = gtrends_party_salience_08, aes(x = ymd(date), y = dem_salience), color=4) +
+  geom_line(data = gtrends_party_salience_08, aes(x = ymd(date), y = rep_salience), color=2) +
+#   geom_smooth(data = gtrends_party_salience_08, aes(x = ymd(date), y = rep_salience), color=2) +
+
+  geom_rect(data = rects, aes(xmin = start, xmax=end, ymin=-Inf, ymax=Inf), 
+            fill="grey80", alpha=0.5) +
+
+  geom_vline(data = vlines, aes(xintercept = as.numeric(xint)), color = "grey80", size=1.5, alpha=0.5) +
+
+  geom_vline(data = prim_08_clean, aes(xintercept = as.numeric(mdy(prim_08_clean$date))), color = "grey60", size=1.5, alpha=0.25) +
+
+  geom_text(data=texts, aes(x = x, y=Inf, label = lab, hjust=hjust, vjust=vjust, angle=angle), 
+            size=3, alpha=0.7, color="black") +
+#   geom_rect(data = elex_cycle_period_08, 
+#                  aes(xmin=ymd(xmin), 
+#                      xmax=ymd(xmax), 
+#                      ymin=0, ymax=100, fill=label), alpha=0.3) +
+
+#   geom_errorbarh(data = elex_cycle_period_08, 
+#                  aes(xmin=ymd(xmin), 
+#                      xmax=ymd(xmax), 
+#                      x=ymd(xmid), y=0), height=2) +
+  theme_minimal() +
+  theme(panel.background = element_rect(fill = "white", colour = "grey90")) +
+  theme_ipsum_rc(grid="XY") +
+  theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)),
+       legend.title = element_blank(),
+       legend.position="bottom") +
+  labs(x = "",
+      y="Google search volume",
+      title = "Google search volume for partisan terms\n  across 2008 election cycle") +
+  scale_x_date(date_labels = "%b %Y")
+```
+
+```{r include=FALSE}
+
+# 2004
+
+# Visualize gtrends by party over time for each year
+rects = tibble(start = ymd('2004-08-08'), 
+                end = ymd('2004-08-29'),
+                y1 = -Inf,
+                y2 = Inf)
+
+texts = tibble(x = c(ymd('2004-07-04'), ymd('2004-08-29'), 
+                     ymd('2004-11-02'),ymd('2004-05-01'),
+                    ymd('2004-8-30'), ymd('2004-7-26'),
+                    ymd('2004-01-19'), ymd('2004-01-27'),
+                    ymd('2004-03-02')),
+                lab = c("July 4th", "Olympics", 
+                        "General election", "Primaries", 
+                        "R Convention", "D Convention",
+                       "IA", "NH", "Super Tuesday"),
+                hjust = c(1, 1, 1, 1, 1,1,2,3, 1.25),
+               vjust = c(0,-1,1, 1,1,0,0,1, 0),
+               angle = c(90,90,90,0,90,90, 90, 90, 90)
+              )
+
+vlines = tibble(xint = c(ymd('2004-07-04'), ymd('2004-11-02'), 
+                         ymd('2004-8-30'), ymd('2004-7-26'))
+               )
+chart04<-
+ggplot() +
+  geom_line(data = gtrends_party_salience_04, aes(x = ymd(date), y = dem_salience), color=4) +
+  geom_line(data = gtrends_party_salience_04, aes(x = ymd(date), y = rep_salience), color=2) +
+  geom_rect(data = rects, aes(xmin = start, xmax=end, ymin=-Inf, ymax=Inf), 
+            fill="grey80", alpha=0.5) +
+
+  geom_vline(data = vlines, aes(xintercept = as.numeric(xint)), color = "grey80", size=1.5, alpha=0.5) +
+
+  geom_vline(data = prim_04_clean, aes(xintercept = as.numeric(mdy(prim_04_clean$date))), color = "grey60", size=1.5, alpha=0.25) +
+
+  geom_text(data=texts, aes(x = x, y=Inf, label = lab, hjust=hjust, vjust=vjust, angle=angle), 
+            size=3, alpha=0.7, color="black") +
+  theme_minimal() +
+  theme(panel.background = element_rect(fill = "white", colour = "grey90")) +
+  theme_ipsum_rc(grid="XY") +
+  theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)),
+       legend.title = element_blank(),
+       legend.position="bottom") +
+  labs(x = "",
+      y="Google search volume",
+      title = "Google search volume for partisan terms\n  across 2004 election cycle") +
+  scale_x_date(date_labels = "%b %Y")
+```
+
+For my [dissertation project](https://github.com/dcldmartin/Dissertation_selections/), I looked into how attention to elections changes the way you think about political leaders and the government. The basic idea: the more you pay attention to partisan conflict (like an election), the more your attitudes are influenced by partisan bias. But in order to test my hypotheses statistically I needed a way to measure how attention to politics changes over time. To look at the 2004 and 2008 elections, I settled on Google search data.
+
+Here's what I like about Google searches: it doesn't tell us what the news is paying attention to, it's an actual record of what people are searching for themselves. We can expect daily newspapers and cable news channels to cover politics every day, but the average person may not. These charts show, for 2004 and 2008, the relative number of times Google users searched for Democrat/Democrats (in Blue) and Republican/Republicans (in Red). One thing to note: the scale on the y axis goes from 0 to 100, but 100 just refers to the maximum search volume recorded in a given week, for that term - not actual absolute numbers of searches. But this caveat aside, the data shows pretty much exactly what we would expect if it were measuring political attention.
+
+**Specifically:**
+
+* We can see peaks in attention around Super Tuesday, Conventions and the general election.
+* Attention is consistently low during the summer lull in the political cycle, between primaries and party conventions.
+* Attention is particularly high in Super Tuesday of 2008 when there were many more primaries concentrated on one day than in other election years.
+* The party conventions in 2004 were on different days and the search patterns reflect this.
+
+```{r echo=FALSE}
+plot(chart04)
+```
+
+```{r echo=FALSE}
+plot(chart08)
+```

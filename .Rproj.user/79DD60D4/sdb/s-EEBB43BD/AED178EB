@@ -1,0 +1,22 @@
+{
+    "collab_server" : "",
+    "contents" : "---\ntitle: \"Dummy blogdown project\"\noutput: html_document\n---\n  \nInstall the package\n\n```{r include=FALSE}\ninstall.packages(\"blogdown\")\n```\n\nInstall Hugo - which builds static sites;\nblogdown sits on top of it (though also integrates with Jekyll - but only a little)\nCalls homebrew if installed\n\n```{r include=FALSE}\nblogdown::install_hugo()\n```\n\nSet up a basic, default site\nSet up a 'New Project' in RStudio: File -> New Project\n\n```{r include=FALSE}\nblogdown::new_site(dir = \"/Users/davidmartin/Documents/Websites/portfolio\",\n                     theme = 'jbub/ghostwriter')\n```\n\nNote: LiveReload means that you have a live server running, so changes to underlying files updates the web page\n\n\n## config.toml\n\n_Go back and change the Names and URLs, once you figure out how you'll host this thing_\n\n```public``` - is where the generated files go to. You won't edit directly\n\n## Rstudio\n\nYou can use functions in RStudio to automatically make a new post and Update metadata\n\n## Themes\n\nFind a theme you like here: http://themes.gohugo.io\n\nYou have to find its github username and repository name and then install it with: ```blogdown::install_theme()``` OR create a new site under another new directory and pass the GitHub repo name to the ```theme``` argument of ```new_site()```. The latter is recommended.\n\nThemes that look good:\n* Ghostwriter: https://github.com/jbub/ghostwriter - let's do this to start\n* Pickles: https://themes.gohugo.io/hugo_theme_pickles/\n* Pixyll: https://themes.gohugo.io/pixyll/\n\n## Suggested workflow\n\nTo edit the site:\n\nset ```options(servr.daemon = TRUE)```)\n\nTools>addins>'Serve site' - it'll point to an IP address you can put in your browser to show the site\n\n\n## Themes\n\nRecall that you can make edits to themese without touching the underlying code by mirroring the file you want to make an edit to, and by specifying something different, it will override that specific file or piece of the code. The reason to do this is if the originl author makes a change to the underlying theme, you can inherit those changes because you haven't touched the underlying code. Good practice.\n\n## Static files\n\nYou can embed a file with markdown: ```![](/foo/bar.png)```\n\nIf you put something in the ```static/``` dir, when you build the site it will just copy it to public.\n\n## Hosting\n\nHost source files in a Git repository. Make a Git repo that tracks changes in everything but ```public/```. Set up you config to host the site on Netlify (once you've registered).\n\nWith Netlify, all you need to do is update the source files, push to github and Netlify will deploy the site for you. In your Netlify config, you specify a build command and it will go. (Alternatively, leave the Build command blank and pre-build the site before pushing to GitHub).\n\n\n---\n\n",
+    "created" : 1511212501374.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1026022304",
+    "id" : "AED178EB",
+    "lastKnownWriteTime" : 1510273518,
+    "last_content_update" : 1511222541067,
+    "path" : "~/Documents/Data Projects/blog_posts/dummy_blogdown_project_notes.Rmd",
+    "project_path" : null,
+    "properties" : {
+        "last_setup_crc32" : "",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

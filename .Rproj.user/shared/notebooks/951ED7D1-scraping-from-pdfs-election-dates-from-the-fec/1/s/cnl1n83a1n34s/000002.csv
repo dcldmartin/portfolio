@@ -1,0 +1,2 @@
+"0","prim_loc <- 'https://transition.fec.gov/pubrec/2008pdates.pdf'"
+"0","prim <- extract_tables(prim_loc)"

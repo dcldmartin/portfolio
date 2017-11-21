@@ -1,0 +1,2 @@
+"0","prim_df$caucus[prim_df$caucus == '1/25-2/7'] <- '1/25-2/7 (Republicans)'"
+"0","prim_df$caucus[prim_df$caucus == '(Republicans)'] <- NA"

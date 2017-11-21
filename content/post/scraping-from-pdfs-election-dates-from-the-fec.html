@@ -1,0 +1,256 @@
+---
+title: 'Scraping from PDFs: Election dates from the FEC'
+author: DCM
+date: []
+slug: scraping-from-pdfs-election-dates-from-the-fec
+categories: []
+tags:
+  - How-to
+---
+
+
+
+<p>I’ve been doing research that shows change in opinion over time across the electoral cycle and I wanted to visualize primary elections - but there’s a whole lot of them. Rather than copying them down by hand, I decided to scrape them from a PDF. I’ve included the full code to reproduce what I did below.</p>
+<p>Now, you might notice that the document in question is pretty short and you could probably copy and paste this thing. My main interest here was to use this as a toy example to show how scraping structured data from a document like this could be done. Hopefully it’s useful as a reference, even if it’s a little overkill for this specific instance. This code scales pretty well to a document of any size.</p>
+<p><em>Note: see the <a href="#tools">Tools</a> section below for links to more info on what’s going on here</em></p>
+<p>In R, a good tool for this is <a href="https://github.com/ropensci/tabulizer"><code>tabulizer</code></a>, a wrapper for a library of Java tools (Tabula).</p>
+<p>First, keep in mind: this package is just a way for you to use R to talk to Java. I don’t do Java myself and ran into a few wonky errors. See below for a little more detail in case you run into them<a href="#fn1" class="footnoteRef" id="fnref1"><sup>1</sup></a></p>
+<p>I installed from the github repo using devtools (you’ll need to install devtools first, if you haven’t already):</p>
+<p><code>devtools::install_github(c(&quot;ropenscilabs/tabulizerjars&quot;, &quot;ropenscilabs/tabulizer&quot;), args = &quot;--no-multiarch&quot;)</code></p>
+<pre class="r"><code># Load in packages
+
+library(tidyverse)</code></pre>
+<pre><code>## Loading tidyverse: ggplot2
+## Loading tidyverse: tibble
+## Loading tidyverse: tidyr
+## Loading tidyverse: readr
+## Loading tidyverse: purrr
+## Loading tidyverse: dplyr</code></pre>
+<pre><code>## Conflicts with tidy packages ----------------------------------------------</code></pre>
+<pre><code>## filter(): dplyr, stats
+## lag():    dplyr, stats</code></pre>
+<pre class="r"><code>library(stringr)
+library(tabulizer)
+library(purrr)</code></pre>
+<p>The FEC has election dates posted as PDFs. You could probably scrape these from Wikipedia or something similar, but I like to go straight to the source.</p>
+<pre class="r"><code>prim_loc &lt;- &#39;https://transition.fec.gov/pubrec/2008pdates.pdf&#39;
+
+prim &lt;- extract_tables(prim_loc)</code></pre>
+<p>It might take a minute. Now you’ve got all the data stored in a useful R object - a list where each top-level element is a page of the PDF.</p>
+<pre class="r"><code>str(prim)</code></pre>
+<pre><code>## List of 6
+##  $ : chr [1:41, 1:5] &quot;STATE&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ : chr [1:40, 1:5] &quot;STATE&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ : chr [1:46, 1:6] &quot;STATE&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ : chr [1:29, 1:6] &quot;STATE&quot; &quot;&quot; &quot;&quot; &quot;&quot; ...
+##  $ : chr [1:47, 1:7] &quot;STATE&quot; &quot;&quot; &quot;&quot; &quot;Iowa&quot; ...
+##  $ : chr [1:36, 1:7] &quot;STATE&quot; &quot;&quot; &quot;&quot; &quot;D.C.&quot; ...</code></pre>
+<p>Let’s look at the first page. If you look into the first element, it’s stored as a two dimensional character vector - rows and columns extracted from that page.</p>
+<pre class="r"><code>str(prim[[1]])</code></pre>
+<pre><code>##  chr [1:41, 1:5] &quot;STATE&quot; &quot;&quot; &quot;&quot; &quot;&quot; &quot;Alabama&quot; &quot;Alaska&quot; ...</code></pre>
+<pre class="r"><code>prim[[1]][c(1:20), ]</code></pre>
+<pre><code>##       [,1]             [,2]           [,3]                
+##  [1,] &quot;STATE&quot;          &quot;PRESIDENTIAL&quot; &quot;PRESIDENTIAL&quot;      
+##  [2,] &quot;&quot;               &quot;PRIMARY&quot;      &quot;CAUCUS DATE&quot;       
+##  [3,] &quot;&quot;               &quot;DATE&quot;         &quot;&quot;                  
+##  [4,] &quot;&quot;               &quot;&quot;             &quot;&quot;                  
+##  [5,] &quot;Alabama&quot;        &quot;2/5&quot;          &quot;&quot;                  
+##  [6,] &quot;Alaska&quot;         &quot;&quot;             &quot;2/5&quot;               
+##  [7,] &quot;American Samoa&quot; &quot;&quot;             &quot;2/23 (Republicans)&quot;
+##  [8,] &quot;&quot;               &quot;&quot;             &quot;2/5 (Democrats)&quot;   
+##  [9,] &quot;Arizona&quot;        &quot;2/5&quot;          &quot;&quot;                  
+## [10,] &quot;Arkansas&quot;       &quot;2/5&quot;          &quot;&quot;                  
+## [11,] &quot;California&quot;     &quot;&quot;             &quot;&quot;                  
+## [12,] &quot;&quot;               &quot;2/5&quot;          &quot;&quot;                  
+## [13,] &quot;Colorado&quot;       &quot;&quot;             &quot;2/5&quot;               
+## [14,] &quot;Connecticut&quot;    &quot;2/5&quot;          &quot;&quot;                  
+## [15,] &quot;Delaware&quot;       &quot;2/5&quot;          &quot;&quot;                  
+## [16,] &quot;&quot;               &quot;&quot;             &quot;&quot;                  
+## [17,] &quot;D.C.&quot;           &quot;2/12&quot;         &quot;&quot;                  
+## [18,] &quot;Florida&quot;        &quot;1/29&quot;         &quot;&quot;                  
+## [19,] &quot;Georgia&quot;        &quot;2/5&quot;          &quot;&quot;                  
+## [20,] &quot;Guam&quot;           &quot;&quot;             &quot;3/8 (Republicans)&quot; 
+##       [,4]                    [,5]                
+##  [1,] &quot;FILING&quot;                &quot;INDEPENDENT 1&quot;     
+##  [2,] &quot;DEADLINE FOR&quot;          &quot;FILING DEADLINE&quot;   
+##  [3,] &quot;PRIMARY&quot;               &quot;FOR GENERAL&quot;       
+##  [4,] &quot;BALLOT ACCESS&quot;         &quot;ELECTION&quot;          
+##  [5,] &quot;11/7&quot;                  &quot;9/6&quot;               
+##  [6,] &quot;n/a&quot;                   &quot;8/6&quot;               
+##  [7,] &quot;n/a&quot;                   &quot;n/a&quot;               
+##  [8,] &quot;&quot;                      &quot;&quot;                  
+##  [9,] &quot;12/17 5pm&quot;             &quot;6/4 5pm&quot;           
+## [10,] &quot;11/19 Noon&quot;            &quot;8/4&quot;               
+## [11,] &quot;12/4 (Democrats)&quot;      &quot;&quot;                  
+## [12,] &quot;11/23 (Other Parties)&quot; &quot;8/8&quot;               
+## [13,] &quot;n/a&quot;                   &quot;6/17 3pm&quot;          
+## [14,] &quot;12/17 4pm&quot;             &quot;8/6&quot;               
+## [15,] &quot;12/10&quot;                 &quot;7/25 (Independent)&quot;
+## [16,] &quot;&quot;                      &quot;9/1 (Third/Minor)&quot; 
+## [17,] &quot;12/14 5pm&quot;             &quot;8/27&quot;              
+## [18,] &quot;10/31&quot;                 &quot;7/15&quot;              
+## [19,] &quot;11/1&quot;                  &quot;7/15&quot;              
+## [20,] &quot;n/a&quot;                   &quot;n/a&quot;</code></pre>
+<p>Let’s just slice off the stuff we need. First drop the pages we don’t need (the pages are redundant, the actual primary data shown in alpha order are on pages 1 and 2). Second, we don’t care about the filing deadlines, so lets just keep the first three columns (with states and dates). Third, let’s drop those headers (the first four rows) and keep everything else.</p>
+<p>I make them into actual data.frames (well, <a href="http://tibble.tidyverse.org/">tibbles</a>) so we can use other dplyr verbs on them. Then to combine all list elements into one big table and give them useful variable names.</p>
+<pre class="r"><code>prim_df&lt;- 
+prim %&gt;%
+.[1:2] %&gt;%
+map(., `[`, c(-1:-4), c(1:3) ) %&gt;%
+map(as.tibble) %&gt;%
+bind_rows() %&gt;%
+set_names(c(&quot;state&quot;, &quot;primary&quot;, &quot;caucus&quot;) ) %&gt;%
+
+na_if(&quot;&quot;) %&gt;%
+filter(!(is.na(state) &amp; is.na(primary) &amp; is.na(caucus)))
+
+head(prim_df)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##            state primary             caucus
+##            &lt;chr&gt;   &lt;chr&gt;              &lt;chr&gt;
+## 1        Alabama     2/5               &lt;NA&gt;
+## 2         Alaska    &lt;NA&gt;                2/5
+## 3 American Samoa    &lt;NA&gt; 2/23 (Republicans)
+## 4           &lt;NA&gt;    &lt;NA&gt;    2/5 (Democrats)
+## 5        Arizona     2/5               &lt;NA&gt;
+## 6       Arkansas     2/5               &lt;NA&gt;</code></pre>
+<pre class="r"><code>tail(prim_df)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##           state primary            caucus
+##           &lt;chr&gt;   &lt;chr&gt;             &lt;chr&gt;
+## 1          &lt;NA&gt;    &lt;NA&gt; 4/5 (Republicans)
+## 2    Washington    2/19               2/9
+## 3 West Virginia    5/13              &lt;NA&gt;
+## 4     Wisconsin    2/19              &lt;NA&gt;
+## 5       Wyoming    &lt;NA&gt; 1/5 (Republicans)
+## 6          &lt;NA&gt;    &lt;NA&gt;   3/8 (Democrats)</code></pre>
+<p>Note two things: 1) First, I used backticks around the subset operator to apply it as a function <code>[</code> . 2) <code>map</code> comes from <code>purrr</code>. Rather than using the apply() set of functions in base R, (or the ply family frm the earlier plyr package) as with other languages, map lets me apply a function across elements of a vector and returns that vector object. So in this case, I get back a list with the top four rows removed, retaining the first three columns.</p>
+<p>Now some general cleanup: For empty strings, make them NA and get rid of rows where everything’s empty. Now fill in states where there’s an implied value that isn’t included in the PDF.</p>
+<pre class="r"><code>prim_df&lt;- 
+prim_df %&gt;%
+fill(state)
+
+head(prim_df)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##            state primary             caucus
+##            &lt;chr&gt;   &lt;chr&gt;              &lt;chr&gt;
+## 1        Alabama     2/5               &lt;NA&gt;
+## 2         Alaska    &lt;NA&gt;                2/5
+## 3 American Samoa    &lt;NA&gt; 2/23 (Republicans)
+## 4 American Samoa    &lt;NA&gt;    2/5 (Democrats)
+## 5        Arizona     2/5               &lt;NA&gt;
+## 6       Arkansas     2/5               &lt;NA&gt;</code></pre>
+<pre class="r"><code>tail(prim_df)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##            state primary            caucus
+##            &lt;chr&gt;   &lt;chr&gt;             &lt;chr&gt;
+## 1 Virgin Islands    &lt;NA&gt; 4/5 (Republicans)
+## 2     Washington    2/19               2/9
+## 3  West Virginia    5/13              &lt;NA&gt;
+## 4      Wisconsin    2/19              &lt;NA&gt;
+## 5        Wyoming    &lt;NA&gt; 1/5 (Republicans)
+## 6        Wyoming    &lt;NA&gt;   3/8 (Democrats)</code></pre>
+<p>A couple spot revisions…</p>
+<pre class="r"><code>prim_df$caucus[prim_df$caucus == &#39;1/25-2/7&#39;] &lt;- &#39;1/25-2/7 (Republicans)&#39;
+prim_df$caucus[prim_df$caucus == &#39;(Republicans)&#39;] &lt;- NA</code></pre>
+<p>Now, rather than a wide format with a column for each type of election, let’s make just one row per election and get rid of those where there’s no date value.</p>
+<pre class="r"><code>primary_dates_2008 &lt;-
+prim_df %&gt;%  
+gather(&#39;primary&#39;, &#39;caucus&#39;, key = &#39;elex_type&#39;, value = &#39;date&#39;) %&gt;%
+filter(!(is.na(date)))
+
+head(primary_dates_2008)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##         state elex_type  date
+##         &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;
+## 1     Alabama   primary   2/5
+## 2     Arizona   primary   2/5
+## 3    Arkansas   primary   2/5
+## 4  California   primary   2/5
+## 5 Connecticut   primary   2/5
+## 6    Delaware   primary   2/5</code></pre>
+<pre class="r"><code>tail(primary_dates_2008)</code></pre>
+<pre><code>## # A tibble: 6 x 3
+##            state elex_type               date
+##            &lt;chr&gt;     &lt;chr&gt;              &lt;chr&gt;
+## 1    Puerto Rico    caucus 2/24 (Republicans)
+## 2 Virgin Islands    caucus    2/9 (Democrats)
+## 3 Virgin Islands    caucus  4/5 (Republicans)
+## 4     Washington    caucus                2/9
+## 5        Wyoming    caucus  1/5 (Republicans)
+## 6        Wyoming    caucus    3/8 (Democrats)</code></pre>
+<p>Finally, separate the date and the party labels into separate columns and format the dates with some regular expressions.</p>
+<pre class="r"><code>library(lubridate)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;lubridate&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:base&#39;:
+## 
+##     date</code></pre>
+<pre class="r"><code>primary_dates_2008 &lt;-
+primary_dates_2008 %&gt;%
+mutate(
+    elex_party = str_extract(date, regex(&quot;[a-zA-Z]+&quot;)),
+    date = str_extract(date, regex(&quot;\\d+/\\d+&quot;)) %&gt;%
+        paste0(&quot;/2008&quot;) %&gt;%
+        mdy()
+    )
+
+
+head(primary_dates_2008)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##         state elex_type       date elex_party
+##         &lt;chr&gt;     &lt;chr&gt;     &lt;date&gt;      &lt;chr&gt;
+## 1     Alabama   primary 2008-02-05       &lt;NA&gt;
+## 2     Arizona   primary 2008-02-05       &lt;NA&gt;
+## 3    Arkansas   primary 2008-02-05       &lt;NA&gt;
+## 4  California   primary 2008-02-05       &lt;NA&gt;
+## 5 Connecticut   primary 2008-02-05       &lt;NA&gt;
+## 6    Delaware   primary 2008-02-05       &lt;NA&gt;</code></pre>
+<pre class="r"><code>tail(primary_dates_2008)</code></pre>
+<pre><code>## # A tibble: 6 x 4
+##            state elex_type       date  elex_party
+##            &lt;chr&gt;     &lt;chr&gt;     &lt;date&gt;       &lt;chr&gt;
+## 1    Puerto Rico    caucus 2008-02-24 Republicans
+## 2 Virgin Islands    caucus 2008-02-09   Democrats
+## 3 Virgin Islands    caucus 2008-04-05 Republicans
+## 4     Washington    caucus 2008-02-09        &lt;NA&gt;
+## 5        Wyoming    caucus 2008-01-05 Republicans
+## 6        Wyoming    caucus 2008-03-08   Democrats</code></pre>
+<p>Here’s a quick-and-dirty plot just to check to see this all makes sense:</p>
+<pre class="r"><code>ggplot() +
+  geom_text(data= primary_dates_2008, aes(x = date, y=0, label = state, color=coalesce(elex_party, &#39;Both&#39;), angle=90), 
+             size=3, position=position_jitter(width=2,height=8), alpha=0.6) +
+   scale_color_manual(values = c(&quot;black&quot;, &quot;blue&quot;,&quot;red&quot;), drop=F) +
+   theme_minimal() +
+   guides(color=guide_legend(title=&quot;Election Type&quot;)) +
+   theme(panel.background = element_rect(fill = &quot;white&quot;, colour = &quot;white&quot;)) +
+   labs(x = &quot;&quot;, y = &quot;&quot;, title = &quot;Primary dates across 2008 election cycle&quot;) +
+   scale_x_date(date_labels = &quot;%b %Y&quot;)</code></pre>
+<p><img src="/post/scraping-from-pdfs-election-dates-from-the-fec_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Yeah, this looks about right: Iowa and New Hampshire at the front; a giant jumble around Super Tuesday and lots of dead space in the middle of spring.</p>
+<hr />
+<p><a id='tools'></a></p>
+<div id="tools" class="section level3">
+<h3>Tools:</h3>
+<p><em>A few links to tutorials on the functions I use above</em></p>
+<p><a href="https://github.com/ropensci/tabulizer">tabulizer</a></p>
+<p>purr: <a href="http://r4ds.had.co.nz/iteration.html#mapping-over-multiple-arguments">map</a></p>
+<p>dplyr: <a href="http://r4ds.had.co.nz/transform.html">filter, mutate</a>, <a href="http://r4ds.had.co.nz/tidy-data.html#spreading-and-gathering">gather</a>, bind_rows, na_if, <a href="http://r4ds.had.co.nz/tidy-data.html#missing-values-3">fill</a></p>
+<p>maggritr: <a href="http://r4ds.had.co.nz/pipes.html">%&gt;%</a>, set_names</p>
+<p><a href="http://r4ds.had.co.nz/strings.html">stringr</a>: str_replace, str_extract, etc</p>
+<p><a href="http://r4ds.had.co.nz/dates-and-times.html">lubridate</a></p>
+<p><a href="http://r4ds.had.co.nz/data-visualisation.html#introduction-1">ggplot</a></p>
+<hr />
+</div>
+<div id="some-coding-concepts" class="section level3">
+<h3>Some coding concepts:</h3>
+<p>Regular expressions: <a href="http://r4ds.had.co.nz/strings.html#matching-patterns-with-regular-expressions">Introduction</a> and <a href="http://www.rexegg.com/regex-quickstart.html">cheatsheet</a></p>
+<p><code>`[`</code>: <a href="http://adv-r.had.co.nz/Functions.html">Advanced R &gt; Functions</a>. See ‘Infix functions’</p>
+</div>
+<div class="footnotes">
+<hr />
+<ol>
+<li id="fn1"><p>Apparently a lot of folks have trouble using R packages that have a Java dependency - or getting them to work with RStudio, if that’s how you do your work. This is too bad, because there’s a lot of utility you can get out of them.<br />
+A brief summary of some of what I’ve found in dealing with this: You need to have the <a href="https://java.com/en/download/">Java runtime environment</a> installed first before doing any of this. Simple enough. But sometimes the R packages and the environments where they run have trouble finding the right libraries to get R and Java to talk to each other. In the case of using RStudio, I found a solution that involved 1) installing rJava first, 2) from terminal, entering <code>R CMD javarecog</code> to find out where the libraries in question were being stored and 3) calling them directly in R before loading the tabulizer package. In my case that’s: <code>dyn.load('/Library/Java/JavaVirtualMachines/jdk1.8.0_144.jdk/Contents/Home/jre/lib/server/libjvm.dylib')</code> If you’re running on a Mac, odds are you’ll just need to replace the <code>jdk1.8.0_144.jdk</code> part with whatever JDK version you’ve installed - and javarecog should tell you what you need to know.<a href="#fnref1">↩</a></p></li>
+</ol>
+</div>

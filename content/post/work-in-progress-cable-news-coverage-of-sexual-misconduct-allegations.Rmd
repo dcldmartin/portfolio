@@ -1,0 +1,475 @@
+---
+title: 'Cable news coverage of sexual misconduct allegations'
+author: ''
+date: []
+slug: cable-news-coverage-of-sexual-misconduct-allegations
+categories: []
+tags: []
+---
+
+<style>
+p.img {
+  display: block;
+  height: auto;
+  max-width: 100%
+}
+</style>
+
+<div align="center">
+*Work in progress*
+</div>
+
+```{r include = FALSE, loadkgs_preplist}
+# Load packages; Prep list for data pull
+
+library(hrbrthemes)
+library(tidyverse)
+library(newsflash)
+library(magrittr)
+library(stringr)
+
+alleg_list_alone <- c("Chris Savino",
+ "Robert Scoble",
+ "Lockhart Steele",
+ "Josh Besh",
+ "Terry Richardson",
+ "Leon Wieseltier",
+ "Knight Landesman",
+ "Rick Najera",
+ "Mark Halperin",
+ "Ken Baker",
+ "Kevin Spacey",
+ "Hamilton Fish",
+ "Michael Oreskes",
+ "Andy Dick",
+ "Kirt Webster",
+ "Brett Ratner",
+ "Jeff Hoover",
+ "David Guillod",
+ "Benjamin Genocchio",
+ "Louie CK, Louis CK",
+ "Roy Moore",
+ "Al Franken",
+ "Richard Dreyfuss",
+ "Gary Goddard",
+ "Dustin Hoffman",
+ "Robert Knepper",
+ "Andrew Kreisberg",
+ "Jeremy Piven",
+ "Steven Seagal",
+ "Tom Sizemore",
+ "Jeffrey Tambor",
+ "George Takei",
+ "James Toback",
+ "Matthew Weiner",
+ "Stephen Blackwell",
+ "Jann Wenner",
+ "Matt Zimmerman",
+ "Stephen Bittel",
+ "Jeff Clemens",
+ "Jack Latvala",
+ "Jeff Hoover",
+ "Michael Fallon",
+ "Alex Gilady",
+ "Danny Jordaan",
+ "Sepp Blatter")
+
+alleg_list_lname <- 
+alleg_list_alone %>%
+str_extract("\\w+$") %>%
+str_to_lower()
+
+q_list <-
+str_to_lower(c(alleg_list_alone, 'Harvey Weinstein'))
+```
+
+```{r include = FALSE, multipull_funct}
+# Loop over multiple queries: yields list of raw results
+newsflash_loop_pull <- function(q_list){
+    
+    require(tidyverse)
+    require(lubridate)
+    require(stringr)
+    require(newsflash)
+    
+     #Instantiate list; message: list name
+      list_name <- "nf_pull"
+    
+     nf_list <- list()
+#      message("List name:", list_name)
+      
+    for (i in 1:length(q_list)){
+        # Pull
+        pull <- query_tv(q_list[i])
+        
+        # Add timestamp for the pull object
+#         pull[['stamp']] <- now(tzone = "America/Chicago")
+        
+        pull[['name']] <- q_list[i]
+        
+        # Name the pull object
+        pull_name <- paste0(q_list[i])   
+        nf_list[[pull_name]] <- pull
+        
+        # Message: pulling
+        message(paste0("Querying ", i, " (", pull[['name']], ")")) 
+        
+        Sys.sleep(1)
+        }
+        
+     assign(list_name, nf_list)
+        
+     get(list_name)
+}
+```
+
+```{r include = FALSE, cache=TRUE, pull1}
+try3 <- newsflash_loop_pull(q_list)
+```
+
+```{r include = FALSE, combine_pulls}
+alleg_tv_data_full <-
+try3 %>%
+    keep(~"timeline" %in% names(.)) %>%
+    transpose() %>%
+    .[['timeline']] %>%
+    lmap(~{
+        .[[1]]['name'] <- names(.)
+        tibble(.)
+        }) %>%
+    map(~.[[1]]) %>%
+    reduce(bind_rows)
+```
+
+```{r include = FALSE, prep_data_for_charts}
+alleg_tv_data_recent <-
+    alleg_tv_data_full %>%
+    mutate(date_start=as.Date(date_start)) %>% 
+    filter(date_start >= as.Date("2017-10-1") & date_start < lubridate::today() - 1)
+
+# Clean up names - make title case
+
+# alleg_tv_data_recent$name <-
+# alleg_tv_data_recent$name %>%
+#   tools::toTitleCase() %>%
+#   str_replace("(C|c)k", "CK")
+
+alleg_tv_date_person<-
+alleg_tv_data_recent %>%
+    group_by(date_start, name) %>%
+    summarise(count_date_person = sum(value))
+
+# alleg_tv_person %>%
+#   group_by(name) %>%
+#   summarise(count = sum(count_person)) %>%
+#    arrange(count)
+
+alleg_tv_date_station<-
+alleg_tv_data_recent %>%
+    group_by(date_start, station) %>%
+    summarise(count_date_station = sum(value))
+
+alleg_tv_date_person_station<-
+alleg_tv_data_recent %>%
+    group_by(date_start, name, station) %>%
+    summarise(count_date_person_station = sum(value))
+
+alleg_tv_date_station_weinstein_moore_others<-
+alleg_tv_data_recent %>%
+    mutate(w_m_other = 
+           case_when(
+               name == "harvey weinstein" ~ "Weinstein",
+               name == "roy moore" ~ "Moore",
+               TRUE ~ "Others")
+          ) %>%
+    group_by(date_start, station, w_m_other) %>%
+    summarise(count_date_station_w_m_other = sum(value))
+
+alleg_tv_date_station_weinstein_others<-
+alleg_tv_data_recent %>%
+    filter(name != "roy moore") %>%
+    mutate(w_other = 
+           case_when(
+               name == "harvey weinstein" ~ "Weinstein",
+               TRUE ~ "Others")
+          ) %>%
+    group_by(date_start, station, w_other) %>%
+    summarise(count_date_station_w_other = sum(value))
+
+alleg_tv_date_person_station$name <-
+alleg_tv_date_person_station$name %>%
+  str_replace("louie ck, louis ck", "Louis CK") %>%
+  tools::toTitleCase()
+```
+
+```{r include = FALSE, find-max}
+alleg_tv_date_person_wide <-
+alleg_tv_date_person %>%
+spread(name, count_date_person)
+
+max_name <- 
+tibble(name = q_list,
+       m =
+           q_list %>%
+           map_chr(~max(alleg_tv_date_person_wide[[.]])),
+       n = 
+           q_list %>%
+       str_extract("\\w+\\s\\w+$")
+      ) %>%
+filter(m > 0)
+
+alleg_tv_date_person_labeled <-
+left_join(alleg_tv_date_person, max_name) %>%
+filter(!(is.na(n))) %>%
+mutate(max = case_when(m == count_date_person ~ m),
+       max = as.numeric(max),
+       max_fullname = case_when(m == count_date_person ~ n)
+       ) %>%
+select(-m,-n)
+
+alleg_tv_date_person_labeled_detail <-
+  alleg_tv_date_person_labeled %>%
+  filter(name %in% max_name$name[max_name$m < 30])
+```
+
+
+```{r error=FALSE, message=FALSE, warning=FALSE, echo=FALSE, chart_count_person}
+
+library(ggthemes)
+library(hrbrthemes)
+library(ggalt)
+
+  
+alleg_tv_date_person$name <-
+alleg_tv_date_person$name %>%
+    str_replace("louie ck, louis ck", "Louis CK") %>%
+    tools::toTitleCase()
+
+chart_count_person <-
+alleg_tv_date_person %>%
+  group_by(name) %>%
+  summarise(count = sum(count_date_person)) %>%
+  filter(count >0) %>%
+#   arrange(count) %>%
+  ggplot() +
+  geom_lollipop(aes(count, reorder(name, count)), horizontal=TRUE, size=0.75,
+                color=ggthemes::tableau_color_pal()(10)[2]) +
+   geom_text(aes(count, reorder(name, count), label=count), hjust=-1, size = 3.2) +
+  scale_x_continuous(expand=c(0.1,2), label=scales::comma, limits=c(0,8000)) +
+  labs(y=NULL, x="# Mentions",
+       title="Total volume of coverage on cable news \n(Oct 1 - Nov 15)") +
+   theme_minimal() +
+    theme_ipsum_rc(grid="X") +
+  theme(panel.grid.minor.y=element_blank(),
+           panel.grid.major.y=element_blank())
+```
+
+```{r include = FALSE, chart_date_person}
+# Show names at max
+# suppress legend
+
+alleg_tv_date_person_labeled$max_fullname <-
+alleg_tv_date_person_labeled$max_fullname %>%
+  str_replace("louis ck", "Louis CK") %>%
+  tools::toTitleCase()
+
+chart_date_person <-
+ggplot() +
+  geom_line(data = alleg_tv_date_person_labeled, 
+#             filter(station %in% c("FOX News", "CNN", "MSNBC")) %>%            
+            stat="identity", 
+            aes(date_start, count_date_person, color=name),
+           size=1, alpha=1) +
+    geom_text(data = alleg_tv_date_person_labeled %>%
+              mutate(max = as.numeric(max)) %>%
+              filter(!is.na(max)) %>%
+              filter(max > 2),
+              aes(date_start, count_date_person, label = max_fullname, color = name), 
+              alpha = 0.9, vjust = -1, hjust=0.8, position = position_jitter(height = 30)) +
+  scale_x_date(name=NULL, expand=c(0,0)) +
+  scale_y_continuous(name="# Mentions", label=scales::comma, limits=c(0, 1500), 
+                     expand=c(0,0)) +
+    theme_minimal() +
+    ggthemes::scale_fill_tableau(name=NULL) +
+  labs(title="Individuals mentioned on cable news \n for alleged sexual misconduct ") +
+    theme_ipsum_rc(grid="XY") +
+   # scale_color_brewer(palette = "Dark2") +
+  theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)),
+       legend.position="none")
+```
+
+```{r include = FALSE, chart_date_person_detail}
+# Show names at max
+# suppress legend
+
+alleg_tv_date_person_labeled_detail$max_fullname <-
+alleg_tv_date_person_labeled_detail$max_fullname %>%
+  str_replace("louis ck", "Louis CK") %>%
+  tools::toTitleCase()
+
+chart_date_person_detail <-
+ggplot() +
+  geom_line(data = alleg_tv_date_person_labeled_detail, 
+            stat="identity", 
+            aes(date_start, count_date_person, color=name),
+           size=1, alpha=1) +
+    geom_text(data = alleg_tv_date_person_labeled_detail %>%
+              mutate(max = as.numeric(max)) %>%
+              filter(!is.na(max)) # %>%
+              # filter(max > 1)
+              ,
+              aes(date_start, count_date_person, label = max_fullname, color = name), 
+              alpha = 0.9, vjust = -1, hjust=0.8, position = position_jitter(height = 25)) +
+  scale_x_date(name=NULL, expand=c(0,0)) +
+  scale_y_continuous(name="# Mentions", label=scales::comma, limits=c(0, 30), 
+                     expand=c(0,0)) +
+    theme_minimal() +
+    ggthemes::scale_fill_tableau(name=NULL) +
+  labs(title="Individuals mentioned on cable news \n for alleged sexual misconduct ") +
+    theme_ipsum_rc(grid="XY") +
+   # scale_color_brewer(palette = "Dark2") +
+  theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)),
+       legend.position="none")
+```
+
+
+```{r include = FALSE, chart_date_weinstein}
+chart_date_weinstein <-
+ggplot() +
+  geom_line(data = alleg_tv_date_person_station %>% 
+            filter(date_start > as.Date("2017-10-3") & date_start < as.Date("2017-10-20")) %>%
+            filter(station %in% c("FOX News", "CNN", "MSNBC")) %>%
+            filter(name == "Harvey Weinstein"),
+              stat="identity", aes(date_start, count_date_person_station, color=station),
+           size=1, alpha=0.9)+
+#   geom_line(data = alleg_tv_date_station %>% filter(!(station %in% c("FOX News", "CNN", "MSNBC", "BBC News"))),
+#               stat="identity", aes(date_start, count_date_station, color=station), 
+#               size=1, alpha=0.1)+
+#   geom_text(aes(label = station_partial_label, group=station), 
+#             alpha = 0.7) +
+    geom_vline(xintercept=c(as.Date("2017-10-11"), as.Date("2017-10-14")), linetype=3, alpha=0.8) +
+
+  scale_x_date(name=NULL, expand=c(0,0)) +
+  scale_y_continuous(name="# Mentions", label=scales::comma, limits=c(0, 210), expand=c(0,0)) +
+#   ggthemes::scale_fill_tableau(name=NULL) +
+  labs(title="Fox stays with peak Weinstein coverage longer \n(Oct 3 - Oct 20)") +
+  theme_minimal() +
+  theme_ipsum_rc(grid="XY") +
+  theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)),
+       legend.title = element_blank(),
+        legend.position="bottom")
+```
+
+    
+```{r include = FALSE, chart-date-w-others-no-moore}
+
+chart_date_w_others_no_moore <-
+ggplot() +
+  geom_line(data = alleg_tv_date_station_weinstein_others %>% filter(station %in% c("FOX News", "CNN", "MSNBC")),
+              stat="identity", aes(date_start, count_date_station_w_other, color=station),
+           size=0.6, alpha=0.9) +
+  facet_grid(w_other ~ .) +
+
+#   geom_text(aes(label = station_partial_label, group=station), 
+#             alpha = 0.7) +
+  scale_x_date(name=NULL, expand=c(0,0)) +
+  scale_y_continuous(name="# Mentions", label=scales::comma, limits=c(0, 210), expand=c(0,0)) +
+#   ggthemes::scale_fill_tableau(name=NULL) +
+  labs(title="Weinstein continues to be mentioned as coverage \nshifts to others in entertainment") +
+  theme_minimal() +
+  theme_ipsum_rc(grid="XY") +
+  theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)),
+       legend.title = element_blank(),
+        legend.position="bottom")
+```
+
+```{r include = FALSE, chart_others}
+
+chart_others <-
+ggplot() +
+  geom_line(data = alleg_tv_date_person_station %>% 
+            filter(station %in% c("FOX News", "CNN", "MSNBC")) %>%
+            filter(name %in% c("Kevin Spacey", "Louis CK")),
+              stat="identity", aes(date_start, count_date_person_station, color=station),
+           size=0.6, alpha=0.9)+
+  facet_grid(name ~ .) +
+  scale_x_date(name=NULL, expand=c(0,0)) +
+  scale_y_continuous(name="# Mentions", label=scales::comma, limits=c(0, 70), expand=c(0,0)) +
+   ggthemes::scale_fill_tableau(name=NULL) +
+  labs(title="Detail: CK and Spacey") +
+  theme_minimal() +
+  theme_ipsum_rc(grid="XY") +
+  theme(legend.position="bottom", legend.title = element_blank()) +
+  theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)))
+```
+
+
+```{r include = FALSE, chart_date_moore}
+
+alleg_tv_date_person_station$name <-
+alleg_tv_date_person_station$name %>%
+  str_replace("louis ck", "Louis CK") %>%
+  tools::toTitleCase()
+
+chart_date_moore <-
+ggplot() +
+  geom_line(data = alleg_tv_date_person_station %>% 
+            filter(date_start > as.Date("2017-11-3") & date_start < as.Date("2017-11-15")) %>%
+            filter(station %in% c("FOX News", "CNN", "MSNBC")) %>%
+            filter(name == "Roy Moore"),
+              stat="identity", aes(date_start, count_date_person_station, color=station),
+           size=1, alpha=0.9) +
+  scale_x_date(name=NULL, expand=c(0,0)) +
+  scale_y_continuous(name="# Mentions", label=scales::comma, limits=c(0, 500), expand=c(0,0)) +
+#   ggthemes::scale_fill_tableau(name=NULL) +
+  labs(title="Fox gives less coverage to Roy Moore\n(Nov 3 - Nov 14)") +
+  theme_minimal() +
+  theme_ipsum_rc(grid="XY") +
+  theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)),
+        legend.position="bottom", legend.title = element_blank())
+```
+
+Beginning with New York Times reporting which brought to light long-held rumors about Harvey Weinstein, a large number of men in highly public positions have been publicly accused of sexual misconduct. As ever more victims come forward and names are added to the list of those publicly accused, it's almost inevitable that individual stories get overwhelmed by the overall narrative of pervasive sexual harassment by powerful men, with details conflated and coverage fit to pre-existing narratives. But what names and narratives get the most attention?
+
+The [New York Times](https://www.nytimes.com/interactive/2017/11/10/us/men-accused-sexual-misconduct-weinstein.html?_r=0) and [Associated Press](https://apnews.com/d6005fd1b1964bff9eaa8ee5fce45580/Weinstein's-Impact:-List-of-men-accused-of-sexual-misconduct?utm_source=newsletter&utm_medium=email&utm_campaign=newsletter_axiosam&stream=top-stories) have each compiled lists of notable men who have been publicly accused. Drawing from this list, I use the GDELT Project's [Television Explorer](https://television.gdeltproject.org/cgi-bin/iatv_ftxtsearch/iatv_ftxtsearch) to track mentions of these men in cable news broadcasts.
+
+More than anything, what becomes clear from this basic analysis is that -- in cable news coverage -- the broader social issue of sexual misconduct by powerful men takes a distant second to the interest in drawing these allegations into the familiar morass of partisan politics.
+
+## The Primacy of Politics
+Most of those accused do not appear to be mentioned at all, with the vast majority of the coverage going to national political figures.
+
+```{r error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+plot(chart_count_person)
+```
+
+```{r error=FALSE, message=FALSE, warning=FALSE, echo=FALSE,fig.width=6, fig.height=4}
+plot(chart_date_person)
+```
+
+While all three major cable networks gave a large amount of coverage to Weinstein following the Times' initial report, Fox continued with high levels of coverage for an additional three days beyond the other two networks. Notably, Weinstein was a significant contributor to Hillary Clinton's campaign.
+
+```{r error=FALSE, message=FALSE, warning=FALSE, echo=FALSE,fig.width=6, fig.height=4}
+plot(chart_date_weinstein)
+```
+
+As the subject of the report that set off the subsequent deluge of public allegations, Weinstein continues to be mentioned as new allegations appear, his name standing in for the phenomenon as a whole.
+
+```{r error=FALSE, message=FALSE, warning=FALSE, echo=FALSE}
+plot(chart_date_w_others_no_moore)
+```
+
+Other public figures have had allegations made against them, with varying levels of coverage by netowrk. Notably, as allegations against Kevin Spacey mounted over several days, Fox News' coverage dwindled while that of MSNBC and CNN peaked again. On the other hand, allegations against Louis CK appear to have gained far more attention on Fox than on MSNBC.
+
+```{r error=FALSE, message=FALSE, warning=FALSE, echo=FALSE,fig.width=6, fig.height=4}
+plot(chart_others)
+```
+
+By far the highest volume of attention in the weeks following the allegations against Weinstein has gone to Roy Moore, with MSNBC and CNN giving more coverage than Fox.
+
+```{r error=FALSE, message=FALSE, warning=FALSE, echo=FALSE, fig.width=6, fig.height=4}
+plot(chart_date_moore)
+```
+
+## Coming up next
+
+This is just a basic look at the number of times these names are mentioned, which is illuminating but limited. The next step for this project is to look a little closer at the actual language being used. As WNYC's *On the Media* [points out](http://www.wnyc.org/story/sexual-harassment-revisited/) the term "sexual harassment" may not be adequate for the new era that these widespread allegations seem to represent. Where once it was a powerful means to give a name to something that had previously gone unrecognized in public, it now may be too bloodless a term to characterize what is often ultimately a crime. And so it could be telling to observe from a birds-eye view the choices that media outlets are using for how to term these acts ("harassment", "misconduct", "assault", etc), the level of detail they use to indicate their severity -- and ultimately how these choices can be selectively employed as verbal dodges or ammunition in partisan conflict.
