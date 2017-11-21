@@ -1,4 +1,4 @@
-baseurl = "http://dcmart.in"
+baseurl = "http://dcmart.in/"
 title = ""
 theme = "ghostwriter"
 languageCode = "en-us"
