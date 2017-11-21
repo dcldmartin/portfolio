@@ -7,10 +7,16 @@ tags: []
 ---
 
 <style>
-p.img {
+img {
   display: block;
-  height: auto;
-  max-width: 100%
+  margin: 0 auto;
+  width: 500px;
+  max-width: 100%;
+}
+
+.captioned{
+  text-align: center;
+  font-style: italic;
 }
 </style>
 
@@ -35,10 +41,9 @@ But Achen and Bartels are skeptical. Leaders often do suffer electoral consequen
 
 In the specific case of Sandy, polls after the fact showed an overwhelmingly positive appraisal of the relief effort, from President Obama to the governors of New York and New Jersey and the New York City mayor. Polls did seem to register an uptick in support of Obama shortly after, but pundits still disagreed on exactly what impact the storm might have had on the election -- if it had any at all.
 
-<div align="center">
+<div class="captioned">
 ![](/post/sandy/Impact Map.png)
-    <div align='left'><i>FEMA map of states affected by Hurricane Sandy</i>
-    </div>
+*FEMA map of states affected by Hurricane Sandy*
 </div>
 
 <br><br>
@@ -54,14 +59,13 @@ Taking into account all the areas that were affected, we found that the average 
 <br><br>
 
 
-<div align="center">
+<div class="captioned">
 
 ![](/post/sandy/NC Results.png)
 
-	<div align=left><i>Above: The North Carolina counties Obama won in blue, and his overall state-wide vote share.</i>
-	</div>
-	<div align=left><i>Below: We estimate the light blue counties would have flipped for Obama, along with North Carolina overall, had the storm covered the state.</i>
-	</div>
+Above: The North Carolina counties Obama won in blue, and his overall state-wide vote share.
+
+Below: We estimate the light blue counties would have flipped for Obama, along with North Carolina overall, had the storm covered the state.
 </div>
 
 <br><br>

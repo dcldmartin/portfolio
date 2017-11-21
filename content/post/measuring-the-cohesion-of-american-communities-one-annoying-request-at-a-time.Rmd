@@ -5,6 +5,20 @@ categories: []
 tags: []
 ---
 
+<style>
+img {
+  display: block;
+  margin: 0 auto;
+  width: 700px;
+  max-width: 100%;
+}
+
+.captioned{
+  text-align: center;
+  font-style: italic;
+}
+</style>
+
 <i>This is a summary of a research paper for which a [gated link](http://apr.sagepub.com/content/43/4/625.short) as well as a [pre-publication copy](/post/census_response/Martin&Newman_CensusResponse.pdf) are available.</i>
 
 ---
@@ -34,11 +48,10 @@ Because the US Census Bureau has such a massive job to do every ten years, they 
 This specific behavior -- turning in a census form early -- actually tells us a lot about a person, and a community, beyond how easy it is to carry out the census. If you think about it, responding to any survey is really a small donation of your time. There's a lot of research showing that people who are more likely to volunteer for surveys are also more likely to volunteer their time for community service or to turn out to vote. In part this may be because they have fewer things competing for their time and attention. But maybe they are also more likely to give their time because they're the kind of person who expects someone else would do the same for them. Maybe by asking a small favor of someone from every household in the country, the census bureau is engaging in an enormous social experiment. In effect, they're measuring how much each person believes they can count on others to repay a favor.
 <br><br>
 
-<div align="center">
+<div class="captioned">
 
 ![](/post/measuring-the-cohesion-of-american-communities-one-annoying-request-at-a-time/Cook County_Census Response Rates.png)
-    <div align='left'><i>Census response rates in Chicago</i>
-    </div>
+Census response rates in Chicago
 </div>
 
 <br><br>

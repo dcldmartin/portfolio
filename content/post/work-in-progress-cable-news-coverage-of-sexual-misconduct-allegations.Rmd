@@ -6,10 +6,16 @@ tags: []
 ---
 
 <style>
-p.img {
+img {
   display: block;
-  height: auto;
-  max-width: 100%
+  margin: 0 auto;
+  width: 700px;
+  max-width: 100%;
+}
+
+.captioned{
+  text-align: center;
+  font-style: italic;
 }
 </style>
 

@@ -9,10 +9,16 @@ tags: []
 
 
 <style>
-p.img {
+img {
   display: block;
-  height: auto;
-  max-width: 100%
+  margin: 0 auto;
+  width: 500px;
+  max-width: 100%;
+}
+
+.captioned{
+  text-align: center;
+  font-style: italic;
 }
 </style>
 <p><i>What follows is a summary of the findings of a research paper for which a <a href="https://www.cambridge.org/core/journals/ps-political-science-and-politics/article/sandy-the-rainmaker-the-electoral-impact-of-a-super-storm/C2BF9E0BD3D0787193E1EEBD2A5DBA6F">gated link</a> as well as a <a href="https://github.com/dcldmartin/HurricaneSandy/blob/test/Velez%20and%20Martin_2013.pdf">pre-publication copy</a> are available.</i></p>
@@ -25,11 +31,8 @@ p.img {
 <p>But natural disasters may be different. Some argue a disaster can tell voters more about a candidate than just their ability to handle a PR emergency. If the campaign process is an opportunity to learn as much as possible about a candidate’s qualifications before votes are cast, a major storm could be seen as a way to show the true character of the current president’s leadership. In a <a href="http://press.princeton.edu/titles/10671.html">recent book</a>, political scientists Christopher Achen and Larry Bartels refer to this as the ‘folk theory’ of democracy: voters know pretty much what they want from a leader, and they can do a pretty good job of sizing up candidates to see who will best give these voters what they want. They just need enough information to make a decision. In that light, a President who acts decisively in the face of tragedy could see a boost in support.</p>
 <p>But Achen and Bartels are skeptical. Leaders often do suffer electoral consequences when things go wrong on their watch, but they also tend to get blamed for things beyond their control. Presidents lose votes when the economy tanks and school boards take a hit for failing test scores. A leader might have some amount of control of these things, but other things are harder to tie back to the person in charge. For example, there’s evidence that incumbent members of congress are more likely to win their seat when their local college football team is doing well. Drought, flooding, even a rough spate of shark attacks at public beaches has been linked to incumbents taking losses at the polls. In other words, while a president could get rewarded for acting decisively in a time of crisis, they may just as easily take blame from voters for events far above their pay grade.</p>
 <p>In the specific case of Sandy, polls after the fact showed an overwhelmingly positive appraisal of the relief effort, from President Obama to the governors of New York and New Jersey and the New York City mayor. Polls did seem to register an uptick in support of Obama shortly after, but pundits still disagreed on exactly what impact the storm might have had on the election – if it had any at all.</p>
-<div align="center">
-<img src="/post/sandy/Impact%20Map.png" />
-<div align="left">
-<i>FEMA map of states affected by Hurricane Sandy</i>
-</div>
+<div class="captioned">
+<p><img src="/post/sandy/Impact%20Map.png" /> <em>FEMA map of states affected by Hurricane Sandy</em></p>
 </div>
 <p><br><br></p>
 <p><strong>Measuring Sandy’s impact</strong></p>
@@ -37,15 +40,13 @@ p.img {
 <p>Of course, some areas really were more likely to be hit than others. We accounted for this by using a matching algorithm that took counties that were affected by the storm and found another county in the US that was nearly identical but was missed. We matched counties along as many metrics as we had (income, population demographics, recent election results, among others) to make the most fair comparison possible and measured the difference in the election outcomes.</p>
 <p>Taking into account all the areas that were affected, we found that the average impact of the storm was about four percentage points in the vote share between the two major party candidates, with a margin of error of two percentage points. Though the estimated impact was fairly large, we recognized the areas that took the brunt of the storm – Connecticut, New York and New Jersey – were never likely to go for Romney under any conditions. The storm was almost certainly not decisive in handing the election to President Obama. Nevertheless, it may genuinely have had an impact on the electoral college vote count.</p>
 <p><br><br></p>
-<div align="center">
+<div class="captioned">
 <div class="figure">
 <img src="/post/sandy/NC%20Results.png" />
 
 </div>
-<pre><code>&lt;div align=left&gt;&lt;i&gt;Above: The North Carolina counties Obama won in blue, and his overall state-wide vote share.&lt;/i&gt;
-&lt;/div&gt;
-&lt;div align=left&gt;&lt;i&gt;Below: We estimate the light blue counties would have flipped for Obama, along with North Carolina overall, had the storm covered the state.&lt;/i&gt;
-&lt;/div&gt;</code></pre>
+<p>Above: The North Carolina counties Obama won in blue, and his overall state-wide vote share.</p>
+<p>Below: We estimate the light blue counties would have flipped for Obama, along with North Carolina overall, had the storm covered the state.</p>
 </div>
 <p><br><br></p>
 <p>Though some weather models predicted North Carolina was in the hurricane’s path, it was mostly spared and Romney won by a narrow margin. We estimated that if all of the state’s counties had been hit by some severe weather during that period the impact would have been enough to flip North Carolina for Obama. <br><br></p>
