@@ -1,8 +1,8 @@
-baseurl = "http://inspiring-lichterman-2b0a36.netlify.com/"
-title = "DCM"
+baseurl = "http://dcmart.in"
+title = ""
 theme = "ghostwriter"
 languageCode = "en-us"
-copyright = "David C. Martin"
+copyright = "2017"
 googleAnalytics = "XXX"
 
 [Author]
