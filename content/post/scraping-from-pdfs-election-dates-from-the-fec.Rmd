@@ -1,7 +1,5 @@
 ---
 title: 'Scraping from PDFs: Election dates from the FEC'
-author: DCM
-date: []
 slug: scraping-from-pdfs-election-dates-from-the-fec
 categories: []
 tags:

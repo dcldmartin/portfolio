@@ -1,7 +1,6 @@
 ---
 title: "Sandy the Rainmaker: The Electoral Impact of a Super Storm"
 author: 'DCM'
-date: []
 slug: sandy-the-rainmaker
 categories: []
 tags: []
