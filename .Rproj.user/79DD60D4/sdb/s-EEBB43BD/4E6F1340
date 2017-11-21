@@ -1,0 +1,21 @@
+{
+    "collab_server" : "",
+    "contents" : "Sys.which('hugo')\nblogdown:::find_hugo()\n\n\nblogdown::hugo_version()",
+    "created" : 1511228270348.000,
+    "dirty" : true,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "4052140026",
+    "id" : "4E6F1340",
+    "lastKnownWriteTime" : 0,
+    "last_content_update" : 1511228335814,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 8,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
