@@ -1,9 +1,6 @@
 ---
 title: 'Scraping from PDFs: Election dates from the FEC'
 slug: scraping-from-pdfs-election-dates-from-the-fec
-categories: []
-tags:
-  - How-to
 ---
 
 I've been doing research that shows change in opinion over time across the electoral cycle and I wanted to visualize primary elections - but there's a whole lot of them. Rather than copying them down by hand, I decided to scrape them from a PDF. I've included the full code to reproduce what I did below.

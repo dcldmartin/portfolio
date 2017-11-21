@@ -1,6 +1,5 @@
 +++
 title = "About"
-date = ""
 author = "David C. Martin"
 description = ""
 +++

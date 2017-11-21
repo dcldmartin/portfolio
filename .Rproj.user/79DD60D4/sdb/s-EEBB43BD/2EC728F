@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "+++\ntitle = \"About\"\nauthor = \"David C. Martin\"\ndescription = \"\"\n+++\n\nI code and tell stories with numbers. Email me: [info@dcmart.in](mailto:info@dcmart.in)",
+    "created" : 1511224492896.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "3830986653",
+    "id" : "2EC728F",
+    "lastKnownWriteTime" : 1511224501,
+    "last_content_update" : 1511224501414,
+    "path" : "~/Documents/Websites/portfolio/content/page/about.md",
+    "project_path" : "content/page/about.md",
+    "properties" : {
+    },
+    "relative_order" : 7,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "markdown"
+}
