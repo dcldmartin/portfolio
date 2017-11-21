@@ -14,10 +14,21 @@ img {
   max-width: 100%;
 }
 
+img.big {
+  display: block;
+  margin: 0 auto;
+  width: 600px;
+  max-width: 100%;
+}
+
 .captioned{
   text-align: center;
   font-style: italic;
+  width: 500px;
+  max-width: 100%;
+  margin: 0 auto;
 }
+
 </style>
 
 
@@ -42,7 +53,8 @@ But Achen and Bartels are skeptical. Leaders often do suffer electoral consequen
 In the specific case of Sandy, polls after the fact showed an overwhelmingly positive appraisal of the relief effort, from President Obama to the governors of New York and New Jersey and the New York City mayor. Polls did seem to register an uptick in support of Obama shortly after, but pundits still disagreed on exactly what impact the storm might have had on the election -- if it had any at all.
 
 <div class="captioned">
-![](/post/sandy/Impact Map.png)
+<img src="/post/sandy/Impact Map.png", class="big">
+
 *FEMA map of states affected by Hurricane Sandy*
 </div>
 
