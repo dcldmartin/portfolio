@@ -212,15 +212,16 @@ head(primary_dates_2008)</code></pre>
 ## 5        Wyoming    caucus 2008-01-05 Republicans
 ## 6        Wyoming    caucus 2008-03-08   Democrats</code></pre>
 <p>Here’s a quick-and-dirty plot just to check to see this all makes sense:</p>
-<pre class="r"><code>ggplot() +
-  geom_text(data= primary_dates_2008, aes(x = date, y=0, label = state, color=coalesce(elex_party, &#39;Both&#39;), angle=90), 
-             size=3, position=position_jitter(width=2,height=8), alpha=0.6) +
-   scale_color_manual(values = c(&quot;black&quot;, &quot;blue&quot;,&quot;red&quot;), drop=F) +
-   theme_minimal() +
-   guides(color=guide_legend(title=&quot;Election Type&quot;)) +
-   theme(panel.background = element_rect(fill = &quot;white&quot;, colour = &quot;white&quot;)) +
-   labs(x = &quot;&quot;, y = &quot;&quot;, title = &quot;Primary dates across 2008 election cycle&quot;) +
-   scale_x_date(date_labels = &quot;%b %Y&quot;)</code></pre>
+<pre class="r"><code>library(ggplot2)
+
+ggplot() +
+  geom_text(data= primary_dates_2008, aes(x = date, y=0, label = state, color=coalesce(elex_party, &#39;Both&#39;), angle=90), size=3, position=position_jitter(width=2,height=8), alpha=0.6) +
+  scale_color_manual(values = c(&quot;black&quot;, &quot;blue&quot;,&quot;red&quot;), drop=F) +
+  theme_minimal() +
+  guides(color=guide_legend(title=&quot;Election Type&quot;)) +
+  labs(x = &quot;&quot;, y = &quot;&quot;, title = &quot;Primary dates across 2008 election cycle&quot;) +
+  theme(panel.background = element_rect(fill = &quot;white&quot;, colour = &quot;white&quot;), axis.text.y=element_blank()) +
+  scale_x_date(date_labels = &quot;%b %Y&quot;)</code></pre>
 <p><img src="/post/scraping-from-pdfs-election-dates-from-the-fec_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
 <p>Yeah, this looks about right: Iowa and New Hampshire at the front; a giant jumble around Super Tuesday and lots of dead space in the middle of spring.</p>
 <hr />

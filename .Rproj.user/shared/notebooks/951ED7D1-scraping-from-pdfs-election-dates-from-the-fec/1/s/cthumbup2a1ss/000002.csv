@@ -1,5 +1,0 @@
-"0","primary_dates_2008 <-"
-"0","prim_df %>%  "
-"0","gather('primary', 'caucus', key = 'elex_type', value = 'date') %>%"
-"0","filter(!(is.na(date)))"
-"0","head(primary_dates_2008)"
