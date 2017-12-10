@@ -20,8 +20,11 @@ img {
 </style>
 
 <div align="center">
-*Work in progress*
-</div>
+*The following is an early version of a story I published with BuzzFeed News: *
+
+["What Sexual Misconduct Allegations Are Getting The Most Attention On Cable News?"](https://www.buzzfeed.com/davidcmartin/sexual-misconduct-cable-news-coverage?utm_term=.drOON6o4Q#.gq19JkO8L)</div>
+
+---
 
 ```{r include = FALSE, loadkgs_preplist}
 # Load packages; Prep list for data pull
@@ -432,6 +435,7 @@ ggplot() +
   theme(axis.text.x=element_text(hjust=c(0, 0.5, 0.5, 0.5, 0.5, 0.5)),
         legend.position="bottom", legend.title = element_blank())
 ```
+
 
 Beginning with New York Times reporting which brought to light long-held rumors about Harvey Weinstein, a large number of men in highly public positions have been publicly accused of sexual misconduct. As ever more victims come forward and names are added to the list of those publicly accused, it's almost inevitable that individual stories get overwhelmed by the overall narrative of pervasive sexual harassment by powerful men, with details conflated and coverage fit to pre-existing narratives. But what names and narratives get the most attention?
 
