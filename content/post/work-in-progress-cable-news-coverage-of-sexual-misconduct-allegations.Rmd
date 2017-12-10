@@ -22,7 +22,9 @@ img {
 <div align="center">
 *The following is an early version of a story I published with BuzzFeed News: *
 
-["What Sexual Misconduct Allegations Are Getting The Most Attention On Cable News?"](https://www.buzzfeed.com/davidcmartin/sexual-misconduct-cable-news-coverage?utm_term=.drOON6o4Q#.gq19JkO8L)</div>
+["What Sexual Misconduct Allegations Are Getting The Most Attention On Cable News?"](https://www.buzzfeed.com/davidcmartin/sexual-misconduct-cable-news-coverage?utm_term=.drOON6o4Q#.gq19JkO8L)
+
+*BuzzFeed also published the full [data and code](https://github.com/BuzzFeedNews/2017-12-sexual-misconduct-cable-news-coverage) used in the analysis for the story. * </div>
 
 ---
 
