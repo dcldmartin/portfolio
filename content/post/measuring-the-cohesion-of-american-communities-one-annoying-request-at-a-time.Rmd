@@ -19,7 +19,7 @@ img {
 }
 </style>
 
-<i>This is a summary of a research paper for which a [gated link](http://apr.sagepub.com/content/43/4/625.short) as well as a [pre-publication copy](/post/census_response/Martin&Newman_CensusResponse.pdf) are available.</i>
+<i>This is a summary of a research paper for which a [gated link](http://apr.sagepub.com/content/43/4/625.short) as well as a [pre-publication copy](/post/measuring-the-cohesion-of-american-communities-one-annoying-request-at-a-time/Martin&Newman_CensusResponse.pdf) are available.</i>
 
 ---
 
